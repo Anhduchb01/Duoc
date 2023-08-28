@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    image: web
+    container_name: web
+    ports:
+      - 5000:5000
+    command: python app.py
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - FLASK_DEBUG=1
+      - DB_URL=mongodb://localhost:27017/
+      - DB_Name=Duoc
+  
