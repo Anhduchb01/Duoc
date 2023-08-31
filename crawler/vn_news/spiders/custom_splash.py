@@ -11,8 +11,6 @@ class CustomSplashSpider(scrapy.Spider):
 	def __init__(self,config=None, *args, **kwargs):
 		super(CustomSplashSpider, self).__init__(*args, **kwargs)
 		self.items_crawled = 0
-		print('crawler')
-		print('config',config)
 		self.last_date = config["last_date"]
 		
 		self.title_query = config['title_query']
@@ -47,38 +45,37 @@ class CustomSplashSpider(scrapy.Spider):
 			for rule in self.correct_rules:
 				if rule in link:
 					return True
-			return False
+				return False
 		else:
 			return True
-
 	def check_incorrect_rules(self, link):
 		if len(self.incorrect_rules) > 0:
 			for rule in self.incorrect_rules:
 				if rule in link:
 					return False
-			return True
+				return True
 		else:
 			return True
-
 	def check_visited_rules(self, link):
 		if link in self.visited_links:
 			return False
-		else:
+		else :
 			return True
-
 	def should_follow_link(self, link):
-		if (
-			self.check_correct_rules(link)
-			and self.check_incorrect_rules(link)
-			and self.check_visited_rules(link)
-		):
+		if(self.check_correct_rules(link) and self.check_incorrect_rules(link) and self.check_visited_rules(link)):
 			return True
 		else:
 			return False
+	
 	def start_requests(self):
 		for url in self.start_urls:
 			print('start request',url)
-			yield SplashRequest(url, self.parse, args={"wait": 10})
+			yield SplashRequest(
+                url,
+                endpoint="render.html",
+                args={"wait": 10,"expand":1,"timeout":90},
+                callback=self.parse,
+            )
 	def parse(self, response):
 		print('start')
 		print('Using Spash :' ,self.useSplash)
@@ -90,24 +87,7 @@ class CustomSplashSpider(scrapy.Spider):
 		print('news_links',news_links)
 		for link in news_links:
 			self.visited_links.add(link)
-
-			yield  SplashRequest(url= link, callback=self.parse_news, args={"wait": 10})
-
-	
-	def parse_news(self, response):
-		# next_page_links = [
-		# 	link for link in response.css('a::attr(href)').extract() if self.should_follow_link(link)
-		# ]
-		le = LinkExtractor()
-		list_page_links = le.extract_links(response)
-		next_page_links = [
-			link.url for link in list_page_links if self.should_follow_link(link.url)
-		]
-		print('next_page_links',next_page_links)
-		for next_page_link in next_page_links:
-			if next_page_link not in self.visited_links:
-				yield  SplashRequest(url= next_page_link, callback=self.parse_news, args={"wait": 15})
-		# title = response.css('div.news-title h1::text').get()
+			yield  SplashRequest(url= link, callback=self.parse, args={"wait": 10,"expand":1,"timeout":90})
 		title = response.css(self.title_query+'::text').get()
 		title = self.formatString(title)
 		if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
@@ -154,3 +134,7 @@ class CustomSplashSpider(scrapy.Spider):
 			yield None
 		else :
 			yield item
+
+
+	
+	

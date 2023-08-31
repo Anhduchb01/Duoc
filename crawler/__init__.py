@@ -348,19 +348,33 @@ def scrape_with_crochet(spider,config_crawl,addressPage):
 	setting.update({
 	"DOWNLOAD_TIMEOUT": config_crawl['modeRobotsParser']
 	})
-	if config_crawl['useSplash'] :
-		print('Config Splash')
-		setting.update({"SPLASH_URL": 'http://127.0.0.1:8050'})
-		setting.update({"SPIDER_MIDDLEWARES": {'scrapy_splash.SplashDeduplicateArgsMiddleware': 100 }})
-		setting.update({"DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter'})
-		setting.update({"HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage'})
-		setting.update({"DOWNLOADER_MIDDLEWARES":{'scrapy_splash.SplashCookiesMiddleware': 723,'scrapy_splash.SplashMiddleware': 725,'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,}})
-	else:
-		setting.update({"SPIDER_MIDDLEWARES": {}})
-		setting.update({"DUPEFILTER_CLASS": 'scrapy.dupefilters.RFPDupeFilter'})
-		setting.update({"HTTPCACHE_STORAGE": 'scrapy.extensions.httpcache.FilesystemCacheStorage'})
-		setting.update({"DOWNLOADER_MIDDLEWARES": {"vn_news.middlewares.VnNewsSpiderMiddleware": 543 }})
 	print('START CRAWL')
+	if config_crawl['useSplash']:
+		print('Config Splash')
+		setting.update({
+			"SPLASH_URL": 'http://localhost:8050',
+			"SPIDER_MIDDLEWARES": {
+				'scrapy_splash.SplashDeduplicateArgsMiddleware': 100
+			},
+			"COOKIES_ENABLED":True,
+			"DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter',
+			"HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage',
+			"DOWNLOADER_MIDDLEWARES": {
+				'scrapy_splash.SplashCookiesMiddleware': 723,
+				'scrapy_splash.SplashMiddleware': 725,
+				'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+			}
+		})
+	else:
+		setting.update({
+			"SPIDER_MIDDLEWARES": {},
+			"DUPEFILTER_CLASS": 'scrapy.dupefilters.RFPDupeFilter',
+			"HTTPCACHE_STORAGE": 'scrapy.extensions.httpcache.FilesystemCacheStorage',
+			"DOWNLOADER_MIDDLEWARES": {
+				"vn_news.middlewares.VnNewsSpiderMiddleware": 543
+			}
+		})
+	print('Updated Settings:', setting.copy_to_dict())
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
