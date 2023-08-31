@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify ,Blueprint ,current_app
 from apscheduler.schedulers.background import BackgroundScheduler
 from scrapy.crawler import CrawlerProcess, CrawlerRunner
 from scrapy.utils.project import get_project_settings
-
+from datetime import datetime
 from crawler.vn_news.spiders.cafebiz_duoc import CafebizDuocSpider
 from crawler.vn_news.spiders.cafef_duoc import CafefDuocSpider
 from crawler.vn_news.spiders.nguoiduatin import NguoiDuaTinSpider
@@ -11,6 +11,7 @@ from crawler.vn_news.spiders.thanhnien import ThanhNienSpider
 from crawler.vn_news.spiders.vnexpress import VnexpressSpider
 from crawler.vn_news.spiders.vnpca import VnpcaSpider
 from crawler.vn_news.spiders.custom import CustomSpider
+from crawler.vn_news.spiders.custom_splash import CustomSplashSpider
 import json
 import threading
 from pymongo import MongoClient
@@ -83,14 +84,12 @@ def create_crawler():
 			"namePage": address_page,
 			"urlPage": obj_data_new["urlPage"],
 			"timeSchedule": obj_data_new["timeSchedule"],
-			"modeCookies": obj_data_new["modeCookies"],
+			# "modeCookies": obj_data_new["modeCookies"],
 			"modeRobotsParser": obj_data_new["modeRobotsParser"],
 			"timeOutCrawl": obj_data_new["timeOutCrawl"],
 			"numberRetryCrawl": obj_data_new["numberRetryCrawl"],
 			"timeDelayCrawl": obj_data_new["timeDelayCrawl"],
 			"userAgent": obj_data_new["userAgent"],
-			"cookies": obj_data_new["cookies"],
-			"httpHeader": obj_data_new["httpHeader"],
 			"article_url_query": obj_data_new["article_url_query"],
 			"title_query": obj_data_new["title_query"],
 			"timeCreatePostOrigin_query": obj_data_new["timeCreatePostOrigin_query"],
@@ -102,7 +101,8 @@ def create_crawler():
 			"start_urls": obj_data_new["start_urls"],
 			"correct_url_contain": obj_data_new["correct_url_contain"],
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
-			"type": "create"
+			"type": "create",
+			"useSplash" : obj_data_new["useSplash"]
 		}
 		config_crawler_obj_id = config_crawlers_collection.insert_one(config_crawler_obj)
 		print(f'Create ConfigCrawler OK : {config_crawler_obj["titlePage"]}')
@@ -121,7 +121,8 @@ def create_crawler():
 			"start_urls": obj_data_new["start_urls"],
 			"correct_url_contain": obj_data_new["correct_url_contain"],
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
-			"type": "create"
+			"type": "create",
+			"useSplash" : obj_data_new["useSplash"]
 		}
 
 		config_default_crawler_obj_id = config_default_crawlers_collection.insert_one(config_default_crawler_obj)
@@ -161,6 +162,7 @@ def get_crawler_information():
 def get_data_edit_crawl():
 	try:
 		config_crawler_data = list(config_crawlers_collection.find({}))
+		print(config_crawler_data[0])
 		return dumps(config_crawler_data)
 
 	except Exception as err:
@@ -195,14 +197,14 @@ def save_edit_crawl():
 					"modeSchedule": obj_data_edit["modeSchedule"],
 					"timeSchedule": obj_data_edit["timeSchedule"],
 					"modePublic": obj_data_edit["modePublic"],
-					"modeCookies": obj_data_edit["modeCookies"],
+					# "modeCookies": obj_data_edit["modeCookies"],
 					"modeRobotsParser": obj_data_edit["modeRobotsParser"],
 					"timeOutCrawl": obj_data_edit["timeOutCrawl"],
 					"numberRetryCrawl": obj_data_edit["numberRetryCrawl"],
 					"timeDelayCrawl": obj_data_edit["timeDelayCrawl"],
 					"userAgent": obj_data_edit["userAgent"],
-					"cookies": obj_data_edit["cookies"],
-					"httpHeader": obj_data_edit["httpHeader"],
+					# "cookies": obj_data_edit["cookies"],
+					# "httpHeader": obj_data_edit["httpHeader"],
 					"article_url_query": obj_data_edit["article_url_query"],
 					"title_query": obj_data_edit["title_query"],
 					"timeCreatePostOrigin_query": obj_data_edit["timeCreatePostOrigin_query"],
@@ -210,7 +212,8 @@ def save_edit_crawl():
 					"content_query": obj_data_edit["content_query"],
 					"summary_query": obj_data_edit["summary_query"],
 					"content_html_query": obj_data_edit["content_html_query"],
-					"summary_html_query": obj_data_edit["summary_query_html"]
+					"summary_html_query": obj_data_edit["summary_query_html"],
+					
 				}
 			}
 		)
@@ -251,14 +254,14 @@ def save_edit_crawl_create():
 				"$set": {
 					"modeSchedule": obj_data_edit["modeSchedule"],
 					"timeSchedule": obj_data_edit["timeSchedule"],
-					"modeCookies": obj_data_edit["modeCookies"],
+					# "modeCookies": obj_data_edit["modeCookies"],
 					"modeRobotsParser": obj_data_edit["modeRobotsParser"],
 					"timeOutCrawl": int(obj_data_edit["timeOutCrawl"]),
 					"numberRetryCrawl": int(obj_data_edit["numberRetryCrawl"]),
 					"timeDelayCrawl": int(obj_data_edit["timeDelayCrawl"]),
 					"userAgent": obj_data_edit["userAgent"],
-					"cookies": obj_data_edit["cookies"],
-					"httpHeader": obj_data_edit["httpHeader"],
+					# "cookies": obj_data_edit["cookies"],
+					# "httpHeader": obj_data_edit["httpHeader"],
 					"article_url_query": obj_data_edit["article_url_query"],
 					"title_query": obj_data_edit["title_query"],
 					"timeCreatePostOrigin_query": obj_data_edit["timeCreatePostOrigin_query"],
@@ -269,7 +272,8 @@ def save_edit_crawl_create():
 					"summary_html_query": obj_data_edit["summary_html_query"],
 					"start_urls": obj_data_edit["start_urls"],
 					"correct_url_contain": obj_data_edit["correct_url_contain"],
-					"incorrect_url_contain": obj_data_edit["incorrect_url_contain"]
+					"incorrect_url_contain": obj_data_edit["incorrect_url_contain"],
+					"useSplash": obj_data_edit["useSplash"],
 				}
 			}
 		)
@@ -290,7 +294,7 @@ def save_edit_crawl_create():
 def crawl():
 	data = request.get_json()
 	namePage = data['namePage']
-	result = crawl_new(crawl_new)
+	result = crawl_new(namePage)
 	return result
 @crawler.route("/tasks/<task_id>", methods=["GET"])
 def get_status(task_id):
@@ -344,6 +348,19 @@ def scrape_with_crochet(spider,config_crawl,addressPage):
 	setting.update({
 	"DOWNLOAD_TIMEOUT": config_crawl['modeRobotsParser']
 	})
+	if config_crawl['useSplash'] :
+		print('Config Splash')
+		setting.update({"SPLASH_URL": 'http://127.0.0.1:8050'})
+		setting.update({"SPIDER_MIDDLEWARES": {'scrapy_splash.SplashDeduplicateArgsMiddleware': 100 }})
+		setting.update({"DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter'})
+		setting.update({"HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage'})
+		setting.update({"DOWNLOADER_MIDDLEWARES":{'scrapy_splash.SplashCookiesMiddleware': 723,'scrapy_splash.SplashMiddleware': 725,'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,}})
+	else:
+		setting.update({"SPIDER_MIDDLEWARES": {}})
+		setting.update({"DUPEFILTER_CLASS": 'scrapy.dupefilters.RFPDupeFilter'})
+		setting.update({"HTTPCACHE_STORAGE": 'scrapy.extensions.httpcache.FilesystemCacheStorage'})
+		setting.update({"DOWNLOADER_MIDDLEWARES": {"vn_news.middlewares.VnNewsSpiderMiddleware": 543 }})
+	print('START CRAWL')
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
@@ -388,14 +405,16 @@ def _crawler_closed(spider):
 	spider_name = spider.name
 	print('finish crawl '+str(spider_name))
 	print('number of posts crawled'+str(spider_counters[spider_name]))
+	current_date = datetime.now().strftime("%Y/%m/%d")
 	if type_crawler == 'origin':
 		db.crawlers.update_one({"addressPage":spider_name}, {'$set': {'increasePost': str(spider_counters[spider_name])}})
 		post_count = db.posts.count_documents({"urlPageCrawl": spider_name})
-		db.crawlers.update_one({"addressPage": spider_name},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success"}})
+		db.crawlers.update_one({"addressPage": spider_name},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success","dateLastCrawler": current_date}})
+
 	else:
 		db.crawlers.update_one({"addressPage":namePage}, {'$set': {'increasePost': str(spider_counters[spider_name])}})
 		post_count = db.posts.count_documents({"urlPageCrawl": namePage})
-		db.crawlers.update_one({"addressPage": namePage},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success"}})
+		db.crawlers.update_one({"addressPage": namePage},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success","dateLastCrawler": current_date}})
 	spider_counters[spider_name] = 0
 def crawl_new(namePage):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage})
@@ -416,7 +435,7 @@ def crawl_new(namePage):
 	numberRetryCrawl = crawler_config["numberRetryCrawl"]
 	userAgent = crawler_config["userAgent"]
 	modeRobotsParser = crawler_config["modeRobotsParser"]
-
+	useSplash = crawler_config["useSplash"]
 	# image_url_query = data.get("image_url_query")
 	print('type_crawler',type_crawler)
 	if type_crawler == 'origin':
@@ -437,6 +456,7 @@ def crawl_new(namePage):
 			'numberRetryCrawl': numberRetryCrawl,
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
+			'useSplash':useSplash
 			# "image_url_query":image_url_query,
 		}
 	else:
@@ -461,6 +481,7 @@ def crawl_new(namePage):
 			'numberRetryCrawl': numberRetryCrawl,
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
+			'useSplash':useSplash
 
 		}
 
@@ -485,8 +506,12 @@ def crawl_new(namePage):
 			scrape_with_crochet(VnpcaSpider,config_crawl,'vnpca')
 			return f'Scraping started for vnpca'
 		else:
-			scrape_with_crochet(CustomSpider,config_crawl,'custom')
-			return 'Scraping started for {}'.format(namePage)
+			if useSplash:
+				scrape_with_crochet(CustomSplashSpider,config_crawl,'customSplash')
+				return 'Scraping Splash started for {}'.format(namePage)
+			else:
+				scrape_with_crochet(CustomSpider,config_crawl,'custom')
+				return 'Scraping Scrapy started for {}'.format(namePage)
 	except Exception as e:
 		msg = f"Error occurred during crawl: {str(traceback.format_exc())}"
 		msg = msg.replace("'","")

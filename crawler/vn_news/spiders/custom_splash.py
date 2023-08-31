@@ -6,10 +6,10 @@ import dateutil.parser
 from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 from .convert_date import convert_to_custom_format
-class CustomSpider(scrapy.Spider):
-	name = 'custom'
+class CustomSplashSpider(scrapy.Spider):
+	name = 'customSplash'
 	def __init__(self,config=None, *args, **kwargs):
-		super(CustomSpider, self).__init__(*args, **kwargs)
+		super(CustomSplashSpider, self).__init__(*args, **kwargs)
 		self.items_crawled = 0
 		print('crawler')
 		print('config',config)
@@ -31,6 +31,7 @@ class CustomSpider(scrapy.Spider):
 		self.incorrect_rules = config['incorrect_rules']
 		self.namePage = config['namePage']
 		self.useSplash = config['useSplash']
+		
 	def formatString(self, text):
 		if isinstance(text, list):  # Check if text is a list
 			text = ' '.join(text)
@@ -74,6 +75,10 @@ class CustomSpider(scrapy.Spider):
 			return True
 		else:
 			return False
+	def start_requests(self):
+		for url in self.start_urls:
+			print('start request',url)
+			yield SplashRequest(url, self.parse, args={"wait": 10})
 	def parse(self, response):
 		print('start')
 		print('Using Spash :' ,self.useSplash)
@@ -85,11 +90,9 @@ class CustomSpider(scrapy.Spider):
 		print('news_links',news_links)
 		for link in news_links:
 			self.visited_links.add(link)
-			if self.useSplash:
-				print('SpashRequest')
-				yield  SplashRequest(url= link, callback=self.parse_news, args={"wait": 15})
-			else:
-				yield scrapy.Request(url= link, callback=self.parse_news)
+
+			yield  SplashRequest(url= link, callback=self.parse_news, args={"wait": 10})
+
 	
 	def parse_news(self, response):
 		# next_page_links = [
@@ -103,11 +106,7 @@ class CustomSpider(scrapy.Spider):
 		print('next_page_links',next_page_links)
 		for next_page_link in next_page_links:
 			if next_page_link not in self.visited_links:
-				if self.useSplash:
-					yield  SplashRequest(url= next_page_link, callback=self.parse_news, args={"wait": 15})
-				else:
-					yield scrapy.Request(url=next_page_link, callback=self.parse_news)
-		
+				yield  SplashRequest(url= next_page_link, callback=self.parse_news, args={"wait": 15})
 		# title = response.css('div.news-title h1::text').get()
 		title = response.css(self.title_query+'::text').get()
 		title = self.formatString(title)
